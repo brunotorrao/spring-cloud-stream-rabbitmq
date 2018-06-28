@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: player-created # exchange that will be created
+          group: social # queue that will be created and binded to the exchange
+  rabbitmq:
+    host: porpoise.rmq.cloudamqp.com
+    virtual-host: mrwninmq
+    username: mrwninmq
+    password: s4UPswpVYk_G2y8ONH3zr57CalYthaXJ
