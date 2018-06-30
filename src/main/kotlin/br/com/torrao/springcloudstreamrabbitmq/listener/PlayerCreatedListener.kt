@@ -20,7 +20,7 @@ class PlayerCreatedListener(val rabbitTemplate: RabbitTemplate) {
             Mono.just(message)
                     .map { handleMessage(it) }
                     .retry(3)
-                    .onErrorResume { sendToDLQ() }
+                    .onErrorResume { sendToDLQ(message) }
         }.log().subscribe()
     }
 
@@ -29,13 +29,13 @@ class PlayerCreatedListener(val rabbitTemplate: RabbitTemplate) {
         throw IllegalStateException()
     }
 
-    private fun sendToDLQ(): Mono<Nothing> {
+    private fun sendToDLQ(message: String): Mono<Nothing> {
         return Mono.fromRunnable<Nothing> {
             println("mono handling error")
             rabbitTemplate.send(
                     "DLX",
                     "$PLAYER_CREATED.social",
-                    Message("lalala".toByteArray(Charset.defaultCharset()), MessageProperties())
+                    Message(message.toByteArray(Charset.defaultCharset()), MessageProperties())
             )
         }
     }
