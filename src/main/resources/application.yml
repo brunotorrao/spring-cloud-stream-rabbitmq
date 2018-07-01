@@ -5,9 +5,12 @@ spring:
         player-created:
           destination: player-created # exchange that will be created
           group: social # queue that will be created and binded to the exchange
-        event-created:
-          destination: event-created
-          group: social
+      rabbit:
+        bindings:
+          player-created:
+            consumer:
+              auto-bind-dlq: true
+              dead-letter-queue-name: dlq.player-created.social
   rabbitmq:
     host: porpoise.rmq.cloudamqp.com
     virtual-host: mrwninmq
