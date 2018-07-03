@@ -9,7 +9,9 @@ import org.springframework.cloud.stream.annotation.StreamListener
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.retry.Retry
 import java.nio.charset.Charset
+import java.time.Duration
 
 @Component
 class PlayerCreatedListener(val rabbitTemplate: RabbitTemplate) {
@@ -19,7 +21,7 @@ class PlayerCreatedListener(val rabbitTemplate: RabbitTemplate) {
         messages.flatMap { message ->
             Mono.just(message)
                     .map { handleMessage(it) }
-                    .retry(3)
+                    .retryWhen( getRetryPolicy() )
                     .onErrorResume { sendToDLQ(message) }
         }.log().subscribe()
     }
@@ -27,6 +29,14 @@ class PlayerCreatedListener(val rabbitTemplate: RabbitTemplate) {
     private fun handleMessage(it: String?) {
         print("$it mono --- ")
         throw IllegalStateException()
+    }
+
+    private fun getRetryPolicy() : Retry<Any> {
+        return Retry
+                .anyOf<Any>(Exception::class.java)
+                .retryMax(5)
+                .exponentialBackoff(Duration.ofSeconds(1), Duration.ofSeconds(6))
+                .doOnRetry { println("retrying message for the ${it.iteration()} time, exception= ${it.exception()}") }
     }
 
     private fun sendToDLQ(message: String): Mono<Nothing> {
